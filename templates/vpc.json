@@ -1,0 +1,647 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Jeremy Hahn's VPC",
+
+  "Parameters" : {
+
+    "VpcName": {
+      "Description" : "The friendly name to assign to the VPC",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "255",
+      "AllowedPattern" : "[-_ a-zA-Z0-9]*",
+      "ConstraintDescription" : "can contain only ASCII characters."
+    },
+
+    "RemoteAdminNetwork" : {
+      "Description" : "The WAN IP address range of the office",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "127.0.0.1/32",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "VpcCidrNetwork" : {
+      "Description" : "The VPC network allocation",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "172.16.0.0/16",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "PublicCidrAZ1" : {
+      "Description" : "The public subnet network in availability zone 1",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "172.16.110.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "PublicCidrAZ2" : {
+      "Description" : "The public subnet network in availability zone 2",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "172.16.120.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "PublicCidrAZ3" : {
+      "Description" : "The public subnet network in availability zone 3",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "172.16.130.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "PrivateCidrAZ1" : {
+      "Description" : "The private network in availability zone 1",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "172.16.111.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "PrivateCidrAZ2" : {
+      "Description" : "The private network in availability zone 2",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "172.16.121.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "PrivateCidrAZ3" : {
+      "Description" : "The private network in availability zone 3",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "172.16.131.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+
+    "VpcAvailabilityZone1" : {
+      "Description" : "Availability zone 1",
+      "Type": "String",
+      "MinLength": "10",
+      "Default": "us-east-1a"
+    },
+
+    "VpcAvailabilityZone2" : {
+      "Description" : "Availability zone 2",
+      "Type": "String",
+      "MinLength": "10",
+      "Default": "us-east-1c"
+    },
+
+    "VpcAvailabilityZone3" : {
+      "Description" : "Availability zone 3",
+      "Type": "String",
+      "MinLength": "10",
+      "Default": "us-east-1d"
+    },
+
+    "DevOpsBucketName": {
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "255",
+      "Description": "Bucket name where devops automation artifacts are stored",
+      "Default": "devops-automation"
+    }
+
+  },
+
+  "Resources" : {
+
+    "Vpc" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "EnableDnsSupport" : "true",
+        "EnableDnsHostnames": "true",
+        "CidrBlock" : { "Ref" : "VpcCidrNetwork" },
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Ref" : "VpcName" } }
+        ]
+      }
+    },
+
+    "InternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-igw" ] ] } },
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} }
+        ]
+      }
+    },
+
+    "AttachGateway" : {
+       "Type" : "AWS::EC2::VPCGatewayAttachment",
+       "Properties" : {
+         "VpcId" : { "Ref" : "Vpc" },
+         "InternetGatewayId" : { "Ref" : "InternetGateway" }
+       }
+    },
+
+    "PublicRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "Vpc"},
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-public" ] ] } },
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } }
+        ]
+      }
+    },
+
+    "DefaultPublicRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "DependsOn" : "AttachGateway",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PublicRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "GatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+
+    "PrivateRouteTableAZ1" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "Vpc"},
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-private-az1" ] ] } }
+        ]
+      }
+    },
+
+    "PrivateRouteTableAZ2" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "Vpc"},
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-private-az2" ] ] } }
+        ]
+      }
+    },
+
+    "PrivateRouteTableAZ3" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "Vpc"},
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-private-az3" ] ] } }
+        ]
+      }
+    },
+
+    "PrivateNetworkAcl" : {
+      "Type" : "AWS::EC2::NetworkAcl",
+      "Properties" : {
+        "VpcId" : {"Ref" : "Vpc"},
+        "Tags" : [{ "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-private" ] ] } }]
+      }
+    },
+
+    "InboundAllTrafficPrivateNetworkAclEntry" : {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "Properties" : {
+        "NetworkAclId" : {"Ref" : "PrivateNetworkAcl"},
+        "RuleNumber" : "1000",
+        "Protocol" : "-1",
+        "RuleAction" : "allow",
+        "Egress" : "false",
+        "CidrBlock" : "0.0.0.0/0",
+        "PortRange" : {"From" : "0", "To" : "65535"}
+      }
+    },
+
+    "OutboundAllTrafficPrivateNetworkAclEntry" : {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "Properties" : {
+        "NetworkAclId" : {"Ref" : "PrivateNetworkAcl"},
+        "RuleNumber" : "1000",
+        "Protocol" : "-1",
+        "RuleAction" : "allow",
+        "Egress" : "true",
+        "CidrBlock" : "0.0.0.0/0",
+        "PortRange" : {"From" : "0", "To" : "65535"}
+      }
+    },
+
+    "PublicNetworkAcl" : {
+      "Type" : "AWS::EC2::NetworkAcl",
+      "Properties" : {
+        "VpcId" : {"Ref" : "Vpc"},
+        "Tags" : [{ "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-public" ] ] } } ]
+      }
+    },
+
+    "InboundIcmpPublicNetworkAclEntry" : {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "Properties" : {
+        "NetworkAclId" : {"Ref" : "PublicNetworkAcl"},
+        "RuleNumber" : "1",
+        "Protocol" : "1",
+        "RuleAction" : "allow",
+        "Egress" : "false",
+        "CidrBlock" : "0.0.0.0/0",
+        "Icmp" : { "Code" : "-1", "Type" : "-1" },
+        "PortRange" : {"From" : "0", "To" : "65535"}
+      }
+    },
+
+    "InboundAllTrafficPublicNetworkAclEntry" : {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "Properties" : {
+        "NetworkAclId" : {"Ref" : "PublicNetworkAcl"},
+        "RuleNumber" : "1000",
+        "Protocol" : "-1",
+        "RuleAction" : "allow",
+        "Egress" : "false",
+        "CidrBlock" : "0.0.0.0/0",
+        "PortRange" : {"From" : "0", "To" : "65535"}
+      }
+    },
+
+    "OutboundAllTrafficPublicNetworkAclEntry" : {
+      "Type" : "AWS::EC2::NetworkAclEntry",
+      "Properties" : {
+        "NetworkAclId" : {"Ref" : "PublicNetworkAcl"},
+        "RuleNumber" : "1000",
+        "Protocol" : "-1",
+        "RuleAction" : "allow",
+        "Egress" : "true",
+        "CidrBlock" : "0.0.0.0/0",
+        "PortRange" : {"From" : "0", "To" : "65535"}
+      }
+    },
+
+    "PublicSubnetAZ1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "Vpc" },
+        "AvailabilityZone" : { "Ref" : "VpcAvailabilityZone1" },
+        "CidrBlock" : { "Ref" : "PublicCidrAZ1" },
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-public-az1" ] ] } },
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } }
+        ]
+      }
+    },
+
+    "PublicSubnetAZ2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "Vpc" },
+        "AvailabilityZone" : { "Ref" : "VpcAvailabilityZone2" },
+        "CidrBlock" : { "Ref" : "PublicCidrAZ2" },
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-public-az2" ] ] } },
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } }
+        ]
+      }
+    },
+
+    "PublicSubnetAZ3" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "Vpc" },
+        "AvailabilityZone" : { "Ref" : "VpcAvailabilityZone3" },
+        "CidrBlock" : { "Ref" : "PublicCidrAZ3" },
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-public-az3" ] ] } },
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } }
+        ]
+      }
+    },
+
+    "PublicSubnetAZ1RouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnetAZ1" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+
+    "PublicSubnetAZ2RouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnetAZ2" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+
+    "PublicSubnetAZ3RouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnetAZ3" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+
+    "PublicSubnetAZ1NetworkAclAssociation" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnetAZ1" },
+        "NetworkAclId" : { "Ref" : "PublicNetworkAcl" }
+      }
+    },
+
+    "PublicSubnetAZ2NetworkAclAssociation" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnetAZ2" },
+        "NetworkAclId" : { "Ref" : "PublicNetworkAcl" }
+      }
+    },
+
+    "PublicSubnetAZ3NetworkAclAssociation" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnetAZ3" },
+        "NetworkAclId" : { "Ref" : "PublicNetworkAcl" }
+      }
+    },
+
+    "PrivateSubnetAZ1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "Vpc" },
+        "AvailabilityZone" : { "Ref" : "VpcAvailabilityZone1" },
+        "CidrBlock" : { "Ref" : "PrivateCidrAZ1" },
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-private-az1" ] ] } },
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} }
+        ]
+      }
+    },
+
+    "PrivateSubnetAZ2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "Vpc" },
+        "AvailabilityZone" : { "Ref" : "VpcAvailabilityZone2" },
+        "CidrBlock" : { "Ref" : "PrivateCidrAZ2" },
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-private-az2" ] ] } },
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} }
+        ]
+      }
+    },
+
+    "PrivateSubnetAZ3" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "Vpc" },
+        "AvailabilityZone" : { "Ref" : "VpcAvailabilityZone3" },
+        "CidrBlock" : { "Ref" : "PrivateCidrAZ3" },
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-private-az3" ] ] } },
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId"} }
+        ]
+      }
+    },
+
+    "PrivateSubnetAZ1RouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnetAZ1" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAZ1" }
+      }
+    },
+
+    "PrivateSubnetAZ2RouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnetAZ2" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAZ2" }
+      }
+    },
+
+    "PrivateSubnetAZ3RouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnetAZ3" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAZ3" }
+      }
+    },
+
+    "PrivateSubnetAZ1NetworkAclAssociation" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnetAZ1" },
+        "NetworkAclId" : { "Ref" : "PrivateNetworkAcl" }
+      }
+    },
+
+    "PrivateSubnetAZ2NetworkAclAssociation" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnetAZ2" },
+        "NetworkAclId" : { "Ref" : "PrivateNetworkAcl" }
+      }
+    },
+
+    "PrivateSubnetAZ3NetworkAclAssociation" : {
+      "Type" : "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnetAZ3" },
+        "NetworkAclId" : { "Ref" : "PrivateNetworkAcl" }
+      }
+    },
+
+    "NatEipAZ1": {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain": "vpc"
+      }
+    },
+
+    "NatEipAZ2": {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain": "vpc"
+      }
+    },
+
+    "NatEipAZ3": {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain": "vpc"
+      }
+    },
+
+    "NatGatewayAZ1": {
+      "Type" : "AWS::EC2::NatGateway",
+      "Properties" : {
+        "AllocationId" : { "Fn::GetAtt" : [ "NatEipAZ1", "AllocationId" ]},
+        "SubnetId": { "Ref": "PublicSubnetAZ1" }
+      }
+    },
+
+    "NatGatewayAZ2": {
+      "Type" : "AWS::EC2::NatGateway",
+      "Properties" : {
+        "AllocationId" : { "Fn::GetAtt" : [ "NatEipAZ2", "AllocationId" ]},
+        "SubnetId": { "Ref": "PublicSubnetAZ2" }
+      }
+    },
+
+    "NatGatewayAZ3": {
+      "Type" : "AWS::EC2::NatGateway",
+      "Properties" : {
+        "AllocationId" : { "Fn::GetAtt" : [ "NatEipAZ3", "AllocationId" ]},
+        "SubnetId": { "Ref": "PublicSubnetAZ3" }
+      }
+    },
+
+    "NatGatewayDefaultRouteAZ1" : {
+      "Type" : "AWS::EC2::Route",
+        "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAZ1" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NatGatewayAZ1" }
+      }
+    },
+
+    "NatGatewayDefaultRouteAZ2" : {
+      "Type" : "AWS::EC2::Route",
+        "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAZ2" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NatGatewayAZ2" }
+      }
+    },
+
+    "NatGatewayDefaultRouteAZ3" : {
+      "Type" : "AWS::EC2::Route",
+        "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAZ3" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NatGatewayAZ3" }
+      }
+    },
+
+    "DefaultIngressSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "VpcId" : { "Ref" : "Vpc" },
+        "GroupDescription" : "Enable SSH and ping from office and between nodes in the VPC",
+        "SecurityGroupIngress": [
+          {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "RemoteAdminNetwork"}},
+          {"IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1", "CidrIp" : { "Ref" : "RemoteAdminNetwork"}},
+          {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "VpcCidrNetwork"}},
+          {"IpProtocol" : "icmp", "FromPort" : "-1", "ToPort" : "-1", "CidrIp" : { "Ref" : "VpcCidrNetwork"}}
+        ],
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-default-ingress" ] ] } }
+        ]
+      }
+    },
+
+    "ElbSecurityGroup": {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "VpcId" : { "Ref" : "Vpc" },
+        "GroupDescription" : "Enable inbound port 80 from anywhere",
+        "SecurityGroupIngress": [
+          {"IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0"}
+        ],
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-inbound-http" ] ] } }
+        ]
+      }
+    },
+
+    "AppSecurityGroup": {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "VpcId" : { "Ref" : "Vpc" },
+        "GroupDescription" : "Enable inbound port 8000 from within the VPC",
+        "SecurityGroupIngress": [
+          {"IpProtocol" : "tcp", "FromPort" : "8000", "ToPort" : "8000", "CidrIp" : { "Ref" : "VpcCidrNetwork"}}
+        ],
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Fn::Join": [ "", [ {"Ref": "VpcName"}, "-inbound-webapp" ] ] } }
+        ]
+      }
+    },
+
+    "AppLoadBalancer" : {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+        "CrossZone": "True",
+        "Subnets": [
+          {"Ref": "PublicSubnetAZ1"},
+          {"Ref": "PublicSubnetAZ2"},
+          {"Ref": "PublicSubnetAZ3"}
+        ],
+        "SecurityGroups": [
+          {"Ref": "ElbSecurityGroup"}
+        ],
+        "Listeners": [{
+          "LoadBalancerPort": "80",
+          "InstancePort": "8000",
+          "Protocol": "HTTP"
+        }],
+        "HealthCheck": {
+          "Target": "HTTP:8000/status",
+          "HealthyThreshold": "2",
+          "UnhealthyThreshold": "3",
+          "Interval": "10",
+          "Timeout": "5"
+        },
+        "ConnectionDrainingPolicy": {
+          "Enabled" : "true",
+          "Timeout" : "60"
+        }
+      }
+    }
+
+  },
+
+  "Outputs" : {
+    "PublicSubnetAZ1": {
+      "Value": {"Ref": "PublicSubnetAZ1"}
+    },
+    "PublicSubnetAZ2": {
+      "Value": {"Ref": "PublicSubnetAZ2"}
+    },
+    "PublicSubnetAZ3": {
+      "Value": {"Ref": "PublicSubnetAZ3"}
+    },
+    "PrivateSubnetAZ1": {
+      "Value": {"Ref": "PrivateSubnetAZ1"}
+    },
+    "PrivateSubnetAZ2": {
+      "Value": {"Ref": "PrivateSubnetAZ2"}
+    },
+    "PrivateSubnetAZ3": {
+      "Value": {"Ref": "PrivateSubnetAZ3"}
+    },
+    "AppSecurityGroup": {
+      "Value": {"Ref": "AppSecurityGroup"}
+    },
+    "ElbSecurityGroup": {
+      "Value": {"Ref": "ElbSecurityGroup"}
+    },
+    "AppLoadBalancer": {
+      "Value": {"Ref": "AppLoadBalancer"}
+    }
+  }
+
+}

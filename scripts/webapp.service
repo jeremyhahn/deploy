@@ -1,0 +1,11 @@
+[Unit]
+Description=webapp
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStart=/opt/jeremyhahn/webapp
+
+[Install]
+WantedBy=multi-user.target

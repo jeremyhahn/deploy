@@ -1,0 +1,27 @@
+#!/usr/bin/env python2
+
+import click
+
+@click.group()
+@click.option('--debug/--no-debug', default=False)
+@click.pass_context
+def main(ctx, debug):
+    """
+    An AWS ELB zero downtime deployment script
+    """
+    ctx.obj['DEBUG'] = debug
+
+if __name__ == '__main__':
+    if __package__ is None:
+        import sys
+        from os import path
+        sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+        from cli.vpc import vpc
+        from cli.app import app
+    else:
+        from ..cli.vpc import vpc
+        from ..cli.app import app
+
+    main.add_command(vpc)
+    main.add_command(app)
+    main(obj={})

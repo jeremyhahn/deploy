@@ -1,0 +1,54 @@
+[
+  {
+    "ParameterKey": "VpcName",
+    "ParameterValue": "jeremyhahnvpc"
+  },
+  {
+    "ParameterKey": "RemoteAdminNetwork",
+    "ParameterValue": "127.0.0.1/32"
+  },
+  {
+    "ParameterKey": "VpcCidrNetwork",
+    "ParameterValue": "172.16.0.0/16"
+  },
+  {
+    "ParameterKey": "PublicCidrAZ1",
+    "ParameterValue": "172.16.110.0/24"
+  },
+  {
+    "ParameterKey": "PublicCidrAZ2",
+    "ParameterValue": "172.16.120.0/24"
+  },
+  {
+    "ParameterKey": "PublicCidrAZ3",
+    "ParameterValue": "172.16.130.0/24"
+  },
+  {
+    "ParameterKey": "PrivateCidrAZ1",
+    "ParameterValue": "172.16.111.0/24"
+  },
+  {
+    "ParameterKey": "PrivateCidrAZ2",
+    "ParameterValue": "172.16.121.0/24"
+  },
+  {
+    "ParameterKey": "PrivateCidrAZ3",
+    "ParameterValue": "172.16.131.0/24"
+  },
+  {
+    "ParameterKey": "VpcAvailabilityZone1",
+    "ParameterValue": "us-east-1a"
+  },
+  {
+    "ParameterKey": "VpcAvailabilityZone2",
+    "ParameterValue": "us-east-1d"
+  },
+  {
+    "ParameterKey": "VpcAvailabilityZone3",
+    "ParameterValue": "us-east-1e"
+  },
+  {
+    "ParameterKey": "DevOpsBucketName",
+    "ParameterValue": "raisedotcom-jeremyhahn-devops"
+  }
+]

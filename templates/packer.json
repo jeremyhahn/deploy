@@ -1,0 +1,36 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": "",
+    "ssh_username": "ec2-user",
+    "ami_id": "ami-009d6802948d06e52"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "us-east-1",
+    "source_ami": "{{user `ami_id` }}",
+    "instance_type": "t2.micro",
+    "ssh_username": "{{user `ssh_username` }}",
+    "ami_name": "raisedotcom-deploy {{timestamp}}"
+  }],
+  "provisioners": [{
+    "type": "shell",
+    "inline": [
+      "sudo mkdir /opt/jeremyhahn",
+      "sudo wget https://raw.github.com/jeremyhahn/go-testapp/master/dist/testapp -O /opt/jeremyhahn/webapp",
+      "sudo chmod +x /opt/jeremyhahn/webapp"
+    ]
+  }, {
+    "type": "file",
+    "source": "scripts/webapp.service",
+    "destination": "/home/{{user `ssh_username` }}/webapp.service"
+  }, {
+    "type": "shell",
+    "inline": [
+      "sudo mv /home/{{user `ssh_username` }}/webapp.service /lib/systemd/system/webapp.service",
+      "sudo systemctl enable webapp"
+    ]
+  }]
+}
